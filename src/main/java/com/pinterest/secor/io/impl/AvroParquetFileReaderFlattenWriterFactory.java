@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AvroParquetFileReaderFlattenWriterFactory extends AvroParquetFileReaderWriterFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(AvroParquetFileReaderFlattenWriterFactory.class);
-    public static final Map<String, SchemaFlattener.FlattenSchema> flattenSchemaCache = new ConcurrentHashMap<>();
+    private static final Map<String, SchemaFlattener.FlattenSchema> flattenSchemaCache = new ConcurrentHashMap<>();
 
     public AvroParquetFileReaderFlattenWriterFactory(SecorConfig config) {
         super(config);
