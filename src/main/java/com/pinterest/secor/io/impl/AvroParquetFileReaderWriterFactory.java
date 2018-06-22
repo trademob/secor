@@ -1,11 +1,13 @@
 package com.pinterest.secor.io.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import com.google.protobuf.Message;
+import com.pinterest.secor.common.LogFilePath;
+import com.pinterest.secor.common.SecorConfig;
 import com.pinterest.secor.common.SecorSchemaRegistryClient;
+import com.pinterest.secor.io.FileReader;
+import com.pinterest.secor.io.FileReaderWriterFactory;
+import com.pinterest.secor.io.FileWriter;
+import com.pinterest.secor.io.KeyValue;
+import com.pinterest.secor.util.ParquetUtil;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.Encoder;
@@ -18,16 +20,12 @@ import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
-
-import com.pinterest.secor.common.LogFilePath;
-import com.pinterest.secor.common.SecorConfig;
-import com.pinterest.secor.io.FileReader;
-import com.pinterest.secor.io.FileReaderWriterFactory;
-import com.pinterest.secor.io.FileWriter;
-import com.pinterest.secor.io.KeyValue;
-import com.pinterest.secor.util.ParquetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class AvroParquetFileReaderWriterFactory implements FileReaderWriterFactory {
 
@@ -99,18 +97,26 @@ public class AvroParquetFileReaderWriterFactory implements FileReaderWriterFacto
 
     protected class AvroParquetFileWriter implements FileWriter {
 
-        private ParquetWriter writer;
-        private String topic;
+        protected ParquetWriter writer;
+        protected String topic;
 
         public AvroParquetFileWriter(LogFilePath logFilePath, CompressionCodec codec) throws IOException {
+            this(logFilePath, codec, false);
+        }
+
+        public AvroParquetFileWriter(LogFilePath logFilePath, CompressionCodec codec, boolean flattenSchema) throws IOException {
             Path path = new Path(logFilePath.getLogFilePath());
             LOG.debug("Creating Brand new Writer for path {}", path);
             CompressionCodecName codecName = CompressionCodecName
                     .fromCompressionCodec(codec != null ? codec.getClass() : null);
             topic = logFilePath.getTopic();
             // Not setting blockSize, pageSize, enableDictionary, and validating
-            writer = AvroParquetWriter.builder(path)
-                    .withSchema(schemaRegistryClient.getSchema(topic))
+            writer = buildWriter(path, schemaRegistryClient.getSchema(topic), codecName);
+        }
+
+        protected ParquetWriter buildWriter(Path path, Schema schema, CompressionCodecName codecName) throws IOException {
+            return AvroParquetWriter.builder(path)
+                    .withSchema(schema)
                     .withCompressionCodec(codecName)
                     .build();
         }
