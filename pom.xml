@@ -146,12 +146,12 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.11.313</version>
+            <version>1.11.372</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-sts</artifactId>
-            <version>1.11.313</version>
+            <version>1.11.372</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jets3t</groupId>

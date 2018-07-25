@@ -6,6 +6,7 @@ RUN mkdir -p /opt/secor
 ADD target/secor-*-bin.tar.gz /opt/secor/
 
 COPY src/main/scripts/docker-entrypoint.sh /docker-entrypoint.sh
+COPY src/main/config/dns.policy /dns.policy
 RUN chmod +x /docker-entrypoint.sh
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

@@ -58,7 +58,10 @@ public class Consumer extends Thread {
     protected MessageTransformer mMessageTransformer;
     protected Uploader mUploader;
     // TODO(pawel): we should keep a count per topic partition.
+    protected boolean mMalformedMessage;
     protected double mUnparsableMessages;
+    protected double mUnwritableMessages;
+    protected double mSkipMessageBoundary;
 
     public Consumer(SecorConfig config) {
         mConfig = config;
@@ -77,7 +80,10 @@ public class Consumer extends Thread {
         mMessageWriter = new MessageWriter(mConfig, mOffsetTracker, fileRegistry);
         mMessageParser = ReflectionUtil.createMessageParser(mConfig.getMessageParserClass(), mConfig);
         mMessageTransformer = ReflectionUtil.createMessageTransformer(mConfig.getMessageTransformerClass(), mConfig);
+        mMalformedMessage = mConfig.getSkipMalformedMessage();
+        mSkipMessageBoundary = mConfig.getSkipMessageBoundary();
         mUnparsableMessages = 0.;
+        mUnwritableMessages = 0.;
     }
 
     @Override
@@ -166,8 +172,16 @@ public class Consumer extends Thread {
 
                     mMetricCollector.metric("consumer.message_size_bytes", rawMessage.getPayload().length, rawMessage.getTopic());
                     mMetricCollector.increment("consumer.throughput_bytes", rawMessage.getPayload().length, rawMessage.getTopic());
+                    final double DECAY = 0.999;
+                    mUnwritableMessages *= DECAY;
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to write message " + parsedMessage, e);
+                    mMetricCollector.increment("consumer.write_message_errors.count", rawMessage.getTopic());
+                    
+                    mUnwritableMessages++;
+                    if (!mMalformedMessage || mUnwritableMessages > mSkipMessageBoundary) {
+                        throw new RuntimeException("Failed to write message " + parsedMessage, e);
+                    }
+                    LOG.warn("Failed to write message " + parsedMessage, e);
                 }
             }
         }

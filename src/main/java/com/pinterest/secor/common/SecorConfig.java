@@ -167,6 +167,22 @@ public class SecorConfig {
         return getInt("secor.messages.per.second");
     }
 
+    public boolean getSkipMalformedMessage() {
+        return getBoolean("secor.message.skip.malformed");
+    }
+
+    public double getSkipMessageBoundary() {
+        double value;
+        String boundary = getString("secor.message.skip.boundary", "1000.0");
+        if (boundary.equals("unbounded")) {
+           value = Double.MAX_VALUE;
+        } else {
+
+           value = Double.parseDouble(boundary);
+        }
+        return value;
+    }
+
     public String getS3FileSystem() { return getString("secor.s3.filesystem"); }
 
     public boolean getSeparateContainersForTopics() {
